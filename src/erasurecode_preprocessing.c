@@ -110,6 +110,11 @@ out_error:
     goto out;
 }
 
+void set_bit(uint8_t A[],  int k)
+{
+    A[k/8] |= 1 << (k%8);
+}
+
 /* 
  * Note that the caller should always check realloc_bm during success or
  * failure to free buffers allocated here.  We could free up in this function,
@@ -122,9 +127,10 @@ int prepare_fragments_for_decode(
         char **data, char **parity,
         int  *missing_idxs,
         int *orig_size, int *fragment_payload_size, int fragment_size,
-        uint64_t *realloc_bm)
+        char** realloc_bm)
 {
     int i;                          /* a counter */
+    int index_realloc_bm = 0;
     unsigned long long missing_bm;  /* bitmap form of missing indexes list */
     int orig_data_size = -1;
     int payload_size = -1;
@@ -150,7 +156,7 @@ int prepare_fragments_for_decode(
                 log_error("Could not allocate data buffer!");
                 return -ENOMEM;
             }
-            *realloc_bm = *realloc_bm | (1 << i);
+            realloc_bm[index_realloc_bm++] = data[i];
         } else if (!is_addr_aligned((unsigned long)data[i], 16)) {
             char *tmp_buf = alloc_fragment_buffer(fragment_size - sizeof(fragment_header_t));
             if (NULL == tmp_buf) {
@@ -159,7 +165,7 @@ int prepare_fragments_for_decode(
             }
             memcpy(tmp_buf, data[i], fragment_size);
             data[i] = tmp_buf;
-            *realloc_bm = *realloc_bm | (1 << i);
+            realloc_bm[index_realloc_bm++] = data[i];
         }
 
         /* Need to determine the size of the original data */
@@ -189,7 +195,7 @@ int prepare_fragments_for_decode(
                 log_error("Could not allocate parity buffer!");
                 return -ENOMEM;
             }
-            *realloc_bm = *realloc_bm | (1 << (k + i));
+            realloc_bm[index_realloc_bm++] = parity[i];
         } else if (!is_addr_aligned((unsigned long)parity[i], 16)) {
             char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
             if (NULL == tmp_buf) {
@@ -198,7 +204,7 @@ int prepare_fragments_for_decode(
             }
             memcpy(tmp_buf, parity[i], fragment_size);
             parity[i] = tmp_buf;
-            *realloc_bm = *realloc_bm | (1 << (k + i));
+            realloc_bm[index_realloc_bm++] = parity[i];
         }
 
        /* Need to determine the size of the original data */

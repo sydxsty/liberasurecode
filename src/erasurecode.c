@@ -524,6 +524,11 @@ int liberasurecode_decode_cleanup(int desc, char *data)
     return 0;
 }
 
+int get_bit(const uint8_t A[],  int k)
+{
+    return A[k/8] & (1 << (k%8));
+}
+
 /**
  * Reconstruct original data from a set of k encoded fragments
  *
@@ -556,7 +561,7 @@ int liberasurecode_decode(int desc,
     char **parity_segments = NULL;
     int *missing_idxs = NULL;
 
-    uint64_t realloc_bm = 0;
+    char *realloc_bm[1024] = {0};
 
     ec_backend_t instance = liberasurecode_backend_instance_get_by_desc(desc);
     if (NULL == instance) {
@@ -683,7 +688,7 @@ int liberasurecode_decode(int desc,
     ret = prepare_fragments_for_decode(k, m,
                                        data, parity, missing_idxs, 
                                        &orig_data_size, &blocksize,
-                                       fragment_len, &realloc_bm);
+                                       fragment_len, realloc_bm);
     if (ret < 0) {
         log_error("Could not prepare fragments for decode!");
         goto out;
@@ -732,17 +737,9 @@ int liberasurecode_decode(int desc,
 
 out:
     /* Free the buffers allocated in prepare_fragments_for_decode */
-    if (realloc_bm != 0) {
-        for (i = 0; i < k; i++) {
-            if (realloc_bm & (1 << i)) {
-                free(data[i]);
-            }
-        }
-
-        for (i = 0; i < m; i++) {
-            if (realloc_bm & (1 << (i + k))) {
-                free(parity[i]);
-            }
+    for (i=0; i<1024; i++) {
+        if (realloc_bm[i] != NULL) {
+            free(realloc_bm[i]);
         }
     }
 
@@ -784,7 +781,8 @@ int liberasurecode_reconstruct_fragment(int desc,
     int k = -1;
     int m = -1;
     int i;
-    uint64_t realloc_bm = 0;
+
+    char *realloc_bm[1024] = {0};
     char **data_segments = NULL;
     char **parity_segments = NULL;
     int set_chksum = 1;
@@ -891,7 +889,7 @@ int liberasurecode_reconstruct_fragment(int desc,
      */
     ret = prepare_fragments_for_decode(k, m, data, parity, missing_idxs,
                                        &orig_data_size, &blocksize,
-                                       fragment_len, &realloc_bm);
+                                       fragment_len, realloc_bm);
     if (ret < 0) {
         log_error("Could not prepare fragments for reconstruction!");
         goto out;
@@ -935,17 +933,9 @@ destination_available:
 
 out:
     /* Free the buffers allocated in prepare_fragments_for_decode */
-    if (realloc_bm != 0) {
-        for (i = 0; i < k; i++) {
-            if (realloc_bm & (1 << i)) {
-                free(data[i]);
-            }
-        }
-
-        for (i = 0; i < m; i++) {
-            if (realloc_bm & (1 << (i + k))) {
-                free(parity[i]);
-            }
+    for (i=0; i<1024; i++) {
+        if (realloc_bm[i] != NULL) {
+            free(realloc_bm[i]);
         }
     }
 
