@@ -19,6 +19,13 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
+#line 3 "main.go"
+
+#include <stdio.h>
+#include <stdlib.h>
+
+
+#line 1 "cgo-generated-wrapper"
 
 
 /* End of preamble from import "C" comments.  */
@@ -76,13 +83,14 @@ extern "C" {
 
 extern GoInt instanceCreate(GoInt dataNum, GoInt parityNum);
 extern GoInt instanceDestroy(GoInt id);
-extern GoInt encode(GoInt id, GoSlice data, GoSlice* shards, GoInt* fragmentLen);
+extern GoInt encodeFirst(GoInt id, void* data, GoInt dataSize, GoInt* fragmentLen, GoInt* dataLen);
+extern GoInt encodeNext(GoInt id, GoSlice* shards);
 extern void encodeCleanup(GoInt id, GoSlice* shards);
 
 // shards[i] = nil in order
 //
-extern GoInt decode(GoInt id, GoSlice shards, GoInt dataSize, GoSlice* data);
-extern void decodeCleanup(GoInt id, GoSlice* data);
+extern GoInt decode(GoInt id, GoSlice shards, GoInt fLength, GoInt dataSize, void** data);
+extern void decodeCleanup(GoInt id, void** data);
 
 #ifdef __cplusplus
 }
