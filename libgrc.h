@@ -84,13 +84,13 @@ extern "C" {
 extern GoInt instanceCreate(GoInt dataNum, GoInt parityNum);
 extern GoInt instanceDestroy(GoInt id);
 extern GoInt encodeFirst(GoInt id, void* data, GoInt dataSize, GoInt* fragmentLen, GoInt* dataLen);
-extern GoInt encodeNext(GoInt id, GoSlice* shards);
-extern void encodeCleanup(GoInt id, GoSlice* shards);
+extern GoInt encodeNext(GoInt id, void* shards, GoInt size);
+extern void encodeCleanup(GoInt id, void* shards, GoInt len);
 
 // shards[i] = nil in order
 //
-extern GoInt decode(GoInt id, GoSlice shards, GoInt fLength, GoInt dataSize, void** data);
-extern void decodeCleanup(GoInt id, void** data);
+extern GoInt decode(GoInt id, void* shards, GoInt shardLen, GoInt fLength, GoInt dataSize, void* data);
+extern void decodeCleanup(GoInt id, void* data);
 
 #ifdef __cplusplus
 }
